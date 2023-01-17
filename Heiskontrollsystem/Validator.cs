@@ -1,17 +1,14 @@
-﻿using System.Drawing;
-using System.Text.RegularExpressions;
-
-namespace Heiskontrollsystem.Infrastructure
+﻿namespace Heiskontrollsystem
 {
     public static class Validator
     {
-        private static int maxFloor;
+        private static int _maxFloor;
 
-        private static bool IsNumber(string str)
+        private static bool IsNumber(string numberStr)
         {
-            if (!new Regex("[0-9]").IsMatch(str))
+            if (!numberStr.All(char.IsDigit))
             {
-                Console.WriteLine(string.Format("'{0}' is an invalid floor number format. Only positive integers are allowed", str));
+                Console.WriteLine("'{0}' is an invalid floor number format. Only positive integers are allowed", numberStr);
 
                 return false;
             }
@@ -23,7 +20,7 @@ namespace Heiskontrollsystem.Infrastructure
         {
             if (floor < 1 || floor > max)
             {
-                Console.WriteLine(string.Format("'{0}' is an invalid floor number. Must be between 1 and {1}", floor, max));
+                Console.WriteLine("'{0}' is an invalid floor number. Must be between 1 and {1}", floor, max);
 
                 return false;
             }
@@ -36,38 +33,37 @@ namespace Heiskontrollsystem.Infrastructure
             if (!IsNumber(maxFloorNumberString))
                 return false;
 
-
             var maxFloorNumber = Convert.ToInt32(maxFloorNumberString);
 
             if (maxFloorNumber == 1)
             {
-                Console.WriteLine(string.Format("'{0}' is an invalid floor number. Must be between 2 and 100", maxFloorNumber));
+                Console.WriteLine("'{0}' is an invalid floor number. Must be between 2 and 100", maxFloorNumber);
                 return false;
             }
 
             if (!IsWithinLimits(maxFloorNumber, 100))
                 return false;
 
-            maxFloor = maxFloorNumber;
+            _maxFloor = maxFloorNumber;
 
             return true;
         }
 
-        private static bool IsValidFloorNumber(string floorNumberString)
+        public static bool IsValidFloorNumber(string floorNumberString)
         {
             if (!IsNumber(floorNumberString))
                 return false;
 
             var maxFloorNumber = Convert.ToInt32(floorNumberString);
 
-            if (!IsWithinLimits(maxFloorNumber, maxFloor))
+            if (!IsWithinLimits(maxFloorNumber, _maxFloor))
                 return false;
 
             return true;
 
         }
 
-        internal static bool IsValidDestinationFloors(string destinationFloorsString)
+        internal static bool IsValidFloorList(string destinationFloorsString)
         {
             string[] floors = destinationFloorsString.Split(',').Select(sValue => sValue.Trim()).ToArray();
 

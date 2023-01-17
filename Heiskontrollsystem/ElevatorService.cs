@@ -1,76 +1,60 @@
-﻿using Heiskontrollsystem.Infrastructure;
-
-namespace Heiskontrollsystem
+﻿namespace Heiskontrollsystem
 {
     public class ElevatorService
     {
-        private static int _maxFloorNumber;
-
-        public static async Task ExecuteAsync()
+        public static void Execute()
         {
-            string maxFloorNumberString;
+            var maxFloor = GetMaxFloor();
+            var floorList = GetFloorList(maxFloor);
+            var elevator = new Elevator(2);
+            elevator.SetFloorList(floorList);
+            var task = Task.Run(async () => await elevator.Move());
+
+            while(true)
+            {
+                if (task.IsCompleted)
+                {
+                    floorList = GetFloorList(maxFloor);
+                    elevator.SetFloorList(floorList);
+                    task = Task.Run(async () => await elevator.Move());
+                }
+            }
+        }
+
+        private static int GetMaxFloor()
+        {
+            string maxFloorStr;
 
             while (true)
             {
                 Console.Write("Enter number of floors in the building. Must be between 2 and 100: ");
-                maxFloorNumberString = Console.ReadLine();
+                maxFloorStr = Console.ReadLine();
 
-                if (Validator.IsValidMaxFloorNumber(maxFloorNumberString))
-                {
+                if (Validator.IsValidMaxFloorNumber(maxFloorStr))
                     break;
-                }
             }
 
-            _maxFloorNumber = Convert.ToInt32(maxFloorNumberString);
+            var maxFloor = Convert.ToInt32(maxFloorStr);
 
-            var destinations = GetDestinations();
-            var fastElevator = new Elevator(2);
-            fastElevator.SetDestinations(destinations);
-            var tokenSource = new CancellationTokenSource();
-            var task = Task.Run(async () => await fastElevator.Move(tokenSource.Token), tokenSource.Token);
-
-            Console.Write("Press 'x' flor emergency break");
-            string isEmergencyBreakRequested;
-
-            while (true)
-            {
-                isEmergencyBreakRequested = Console.ReadLine();
-
-                if (task.IsCompleted)
-                {
-                    fastElevator.SetDestinations(GetDestinations());
-                    task = Task.Run(async () => await fastElevator.Move(tokenSource.Token), tokenSource.Token);
-                }
-
-                if (tokenSource.Token.IsCancellationRequested)
-                {
-                    Console.Write("Emergency break");
-                    break;
-                }
-
-                if (isEmergencyBreakRequested == "x")
-                    tokenSource.Cancel();
-            }
+            return maxFloor;
         }
 
-        private static List<int> GetDestinations()
+        private static List<int> GetFloorList(int maxFloor)
         {
-            var destinationFloorsString = "";
+            var floorListStr = "";
 
             while (true)
             {
-                Console.Write(string.Format("Enter destination floors in comma-separated values format e.g 1, 2, 3. Destination floors must be between 1 and {0}: ", _maxFloorNumber));
-                destinationFloorsString = Console.ReadLine();
+                Console.Write("\nEnter destination floors in comma-separated values format eg 1, 2, 3 or a single value eg 4. Destination floors must be between 1 and {0}: ", maxFloor);
+                floorListStr = Console.ReadLine();
 
-                if (Validator.IsValidDestinationFloors(destinationFloorsString))
-                {
+                if (Validator.IsValidFloorList(floorListStr))
                     break;
-                }
             }
 
-            var destinations = destinationFloorsString.Split(',').Select(int.Parse).ToList();
+            var floorList = floorListStr.Split(',').Select(int.Parse).ToList();
 
-            return destinations;
+            return floorList;
         }
     }
 }
